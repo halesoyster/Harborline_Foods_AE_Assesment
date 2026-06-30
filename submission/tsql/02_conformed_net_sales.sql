@@ -57,7 +57,7 @@ SELECT
         SELECT 1 FROM qu_transactions q JOIN dim_locations d ON d.qu_store_code = q.store_code
    ) z) AS conformed_rows;
 
--- 2. No orphans: every transaction resolves to a location_key.
+-- 2. No unmapped rows: every transaction resolves to a location_key.
 --    Expected: toast_orphans=0, qu_orphans=0
 SELECT
   (SELECT COUNT(*) FROM toast_transactions t
@@ -73,7 +73,7 @@ SELECT
   (SELECT SUM(net_sales) FROM toast_transactions)                   AS toast_net,
   (SELECT SUM(gross_sales - promo_deductions) FROM qu_transactions) AS qu_net;
 
--- 4. Brand B presence (the money shot): before vs after.
+-- 4. Brand B: before vs after.
 --
 -- BEFORE (run before Task 1): Brand B dollars exist in qu_transactions
 -- but the join fails because qu_store_code is not in dim_locations.
