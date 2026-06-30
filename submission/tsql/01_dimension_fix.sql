@@ -2,10 +2,9 @@
 -- TASK 1 - Conformed dimension fix (T-SQL / SQL Server)
 -- Add qu_store_code to dim_locations and backfill Brand B so
 -- qu_transactions can join.
---
+
 -- Dialect: T-SQL (SQL Server / Microsoft Fabric)
--- Validated against: PostgreSQL (DuckDB) - logic identical;
---   two syntax deltas applied below.
+
 -- Grain of dim_locations: one row per physical location.
 -- A conformed location dimension carries EVERY source system's
 -- natural key (toast_loc_id, qu_store_code, and later r365 code)
@@ -19,13 +18,11 @@ WHERE brand = 'Brand B'
 ORDER BY location_key;
 
 -- ---- 1. Add the conformed Qu key -----------------------------------------------
--- T-SQL: ADD without COLUMN keyword
 ALTER TABLE dim_locations ADD qu_store_code VARCHAR(10);
 
 -- ---- 2. Backfill from the authoritative Qu crosswalk ---------------------------
--- The crosswalk is the store->location map sourced from the Qu admin;
--- it was simply never loaded into the dimension - that is the bug.
--- T-SQL: alias goes on the target table, not in the SET clause
+-- The crosswalk is the store->location map sourced from the Qu admin
+-- it was never loaded into the dimension - that is the bug.
 UPDATE d
 SET    d.qu_store_code = x.qu_store_code
 FROM   dim_locations d
