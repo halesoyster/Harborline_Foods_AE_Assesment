@@ -1,0 +1,38 @@
+location_key,location_name,brand,region,toast_loc_id
+1,Downtown Denver,Brand A,Mountain West,LOC-01
+2,Cherry Creek,Brand A,Mountain West,LOC-02
+3,Boulder Pearl St,Brand A,High Plains,LOC-03
+4,Fort Collins Old Town,Brand A,Front Range,LOC-04
+5,Colorado Springs,Brand A,Front Range,LOC-05
+6,Aurora Southlands,Brand A,Front Range,LOC-06
+7,Lakewood Belmar,Brand A,Mountain West,LOC-07
+8,Littleton Aspen Grove,Brand A,Mountain West,LOC-08
+9,Highlands Ranch,Brand A,Western Slope,LOC-09
+10,Westminster,Brand A,Mountain West,LOC-10
+11,Arvada Olde Town,Brand A,Mountain West,LOC-11
+12,Centennial,Brand A,Mountain West,LOC-12
+13,Parker Mainstreet,Brand A,Front Range,LOC-13
+14,Castle Rock,Brand A,Front Range,LOC-14
+15,Greeley,Brand A,Mountain West,LOC-15
+16,Loveland,Brand A,Front Range,LOC-16
+17,Longmont,Brand A,Western Slope,LOC-17
+18,Broomfield Flatiron,Brand A,Front Range,LOC-18
+19,Englewood,Brand A,Western Slope,LOC-19
+20,Wheat Ridge,Brand A,High Plains,LOC-20
+21,Thornton,Brand A,Mountain West,LOC-21
+22,Northglenn,Brand A,Front Range,LOC-22
+23,Commerce City,Brand A,Western Slope,LOC-23
+24,Golden,Brand A,High Plains,LOC-24
+25,Louisville,Brand A,High Plains,LOC-25
+26,Superior,Brand A,Front Range,LOC-26
+27,Erie,Brand A,Front Range,LOC-27
+28,Brighton,Brand A,High Plains,LOC-28
+29,Cherry Creek Bistro,Brand B,Mountain West,
+30,LoDo Kitchen,Brand B,Mountain West,
+31,RiNo Tap,Brand B,Western Slope,
+32,Wash Park Cafe,Brand B,Mountain West,
+33,Berkeley Table,Brand B,High Plains,
+34,Capitol Hill Counter,Brand B,High Plains,
+35,Sloans Lake Grill,Brand B,High Plains,
+36,Stapleton Eatery,Brand B,Mountain West,
+37,Belmar Social,Brand B,Western Slope,
