@@ -2,74 +2,67 @@
 
 A conformed P&L model across three restaurant source systems (Toast POS, Qu POS, Restaurant365) for a fictional multi-brand restaurant group, **Harborline Foods**. Built for the Blue Margin AE III take-home.
 
-> **SQL dialect:** the deliverable targets **T-SQL** (SQL Server / Microsoft Fabric, Blue Margin's stack). It is developed and validated locally in **PostgreSQL**; the handful of dialect differences are marked `-- [T-SQL]` inline in each script.
+## The problem
 
-## How the pieces fit
+Harborline runs three brands across 40+ locations on systems that grew up separately and never shared a location key. The consequence: Brand B's sales (in Qu) could not be joined to the rest of the business, so every cross-brand roll-up silently understated revenue. The work conforms the location dimension so each system's store identifier resolves to one location, defines one net-sales figure across the POS systems, and exposes the views the CFO asked for - net sales and COGS by brand, location, and week, plus a filterable Prime Cost view.
 
-CSV files are not a database - you cannot run `SELECT * FROM dim_locations` against a folder of CSVs. The data has to be **loaded into Postgres tables** first. The flow:
+> **SQL dialect:** deliverables target **T-SQL** (SQL Server / Microsoft Fabric, Blue Margin's stack), developed and validated in DuckDB. The handful of T-SQL dialect deltas are marked `-- [T-SQL]` inline and applied cleanly in `submission/tsql/`.
 
+## Schema
+
+```mermaid
+erDiagram
+    dim_locations ||--o{ toast_transactions : "toast_loc_id = location_id"
+    dim_locations ||--o{ qu_transactions : "qu_store_code = store_code"
+    dim_locations ||--o{ r365_gl_entries : "location_code"
+    dim_locations ||--o| qu_location_crosswalk : "Task 1 backfill source"
+
+    dim_locations {
+        int location_key PK
+        varchar location_name
+        varchar brand
+        varchar region
+        varchar toast_loc_id "Brand A key"
+        varchar qu_store_code "Brand B key - added in Task 1"
+    }
+    toast_transactions {
+        varchar transaction_id PK
+        varchar location_id FK
+        date transaction_date
+        decimal net_sales "already net of discounts"
+        decimal discount_amount
+        int covers
+    }
+    qu_transactions {
+        varchar order_id PK
+        varchar store_code FK
+        date order_date
+        decimal gross_sales "net = gross - promo"
+        decimal promo_deductions
+        int guest_count
+    }
+    r365_gl_entries {
+        varchar entry_id PK
+        varchar location_code FK
+        int account_code "5xxx COGS, 6xxx Labor"
+        varchar account_name
+        date posting_date
+        decimal amount "negative = cost"
+    }
+    qu_location_crosswalk {
+        int location_key FK
+        varchar location_name
+        varchar qu_store_code
+    }
 ```
-generate_data.py  ->  data/*.csv  ->  load_data.py  ->  Postgres tables  ->  run sql/*.sql
-   (make data)        (flat files)   (create + load)    (queryable!)        (the tasks)
-```
 
-## Repo layout
+## Deliverables
 
-```
-.
-├── README.md
-├── requirements.txt
-├── .env.example
-├── data/                          # synthetic CSVs (committed, reproducible)
-├── src/
-│   ├── generate_data.py           # builds the synthetic CSVs
-│   └── load_data.py               # creates the db + tables, loads the CSVs
-├── sql/
-│   ├── 00_schema.sql              # table definitions
-│   ├── 01_dimension_fix.sql       # Task 1
-│   └── 02_conformed_net_sales.sql # Task 2
-├── docs/
-│   ├── brief.md                   # stakeholder brief
-│   └── context.md                 # full build spec + assumptions
-└── submission/                    # CFO note, header note (added later)
-```
-
-## Run it locally (Postgres.app + VS Code)
-
-**1. Install Postgres.** Download [Postgres.app](https://postgresapp.com), move it to Applications, open it, click **Initialize**. You now have a server on `localhost:5432` (your macOS username is the superuser, no password). Closing the app stops the server.
-
-**2. Python deps.**
-```bash
-pip install -r requirements.txt
-```
-
-**3. Generate the data.**
-```bash
-python src/generate_data.py
-```
-Writes five CSVs into `data/`, with Brand B intentionally unmapped so the Task 1 fix is provable.
-
-**4. Load the data into Postgres** (this is the step that makes the tables queryable).
-```bash
-python src/load_data.py
-```
-Creates the `harborline` database, builds the tables from `sql/00_schema.sql`, and loads the CSVs. When it finishes, the tables are live.
-
-**5. Run and test the SQL in VS Code.** Install the **SQLTools** extension and the **SQLTools PostgreSQL/Cockroach Driver**. Add a connection:
-- Server: `localhost`  Port: `5432`  Database: `harborline`
-- Username: your macOS username  Password: (leave blank)
-
-Open `sql/01_dimension_fix.sql`, then `sql/02_conformed_net_sales.sql`, and run them. Each prints before/after and validation output. You can now also run ad-hoc queries like `SELECT * FROM dim_locations;`.
-
-> Prefer a notebook? `jupysql` is already installed. In a `.ipynb`: `%load_ext sql`, then `%sql postgresql+psycopg2://<youruser>@localhost:5432/harborline`, then `%%sql` cells - result tables render inline.
-
-## The tasks
-
-| # | File | What |
+| # | File | What it does |
 |---|------|------|
-| 1 | `sql/01_dimension_fix.sql` | Add + backfill `qu_store_code` so Brand B joins to its sales. |
-| 2 | `sql/02_conformed_net_sales.sql` | Conformed net sales across Toast + Qu, with validation. |
-| 3 | `dax/measures.md` | Power BI DAX measures (Current Week, Rolling 4-Week, Prime Cost %). |
-| 4 | `submission/cfo_note.md` | Stakeholder note to the CFO. |
+| 1 | `sql/01_dimension_fix.sql` | Adds and backfills `qu_store_code` so Brand B joins to its sales. |
+| 2 | `sql/02_conformed_net_sales.sql` | Conforms net sales across Toast + Qu, with validation checks. |
+| 3 | `dax/measures.md` | Power BI DAX measures: Current Week, Rolling 4-Week Avg, Prime Cost %. |
+| 4 | `submission/cfo_note.md` | Stakeholder note to the CFO (two versions). |
 
-See `docs/brief.md` for the stakeholder framing and `docs/context.md` for the full spec, assumptions, and validation plan.
+Clean T-SQL submission copies are in `submission/tsql/`. The proof harness - the SQL run end to end with before/after and validation output - is `notebook/harborline_validation.ipynb`. Tools, time, assumptions, and the AI-usage log are in `submission/header_note.md`.

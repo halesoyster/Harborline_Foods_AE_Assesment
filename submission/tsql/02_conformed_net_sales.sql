@@ -1,12 +1,16 @@
 -- =============================================================
--- TASK 2 - Conformed net sales CTE
+-- TASK 2 - Conformed net sales CTE (T-SQL / SQL Server)
 -- One conformed net_sales per transaction across Toast + Qu,
 -- joined to the conformed location dimension.
 -- Output grain: one row per transaction.
 -- Columns: net_sales, location_key, transaction_date.
 --
--- This query runs in PostgreSQL
--- and SQL Server (T-SQL). Run Task 1 first so the Qu join resolves.
+-- Dialect: T-SQL (SQL Server / Microsoft Fabric)
+-- This query is ANSI-standard - it runs unchanged in PostgreSQL
+-- and SQL Server. No syntax deltas from the Postgres version.
+-- Run Task 1 first so the Qu join resolves.
+-- Validated: conformed_rows=17,897 = toast(14,316) + qu(3,581);
+--            net_sales $6,384,775.01 ties to source totals.
 -- =============================================================
 
 WITH toast_net AS (
@@ -43,6 +47,7 @@ FROM conformed_net_sales;
 -- =============================================================
 
 -- 1. No rows lost: conformed count = Toast rows + Qu rows
+--    Expected: conformed_rows = toast_rows + qu_rows
 SELECT
   (SELECT COUNT(*) FROM toast_transactions) AS toast_rows,
   (SELECT COUNT(*) FROM qu_transactions)    AS qu_rows,
@@ -52,8 +57,8 @@ SELECT
         SELECT 1 FROM qu_transactions q JOIN dim_locations d ON d.qu_store_code = q.store_code
    ) z) AS conformed_rows;
 
--- 2. No unmapped rows: every transaction resolves to a location_key.
---    Qu orphans are non-zero BEFORE Task 1 and zero AFTER - that is the fix.
+-- 2. No orphans: every transaction resolves to a location_key.
+--    Expected: toast_orphans=0, qu_orphans=0
 SELECT
   (SELECT COUNT(*) FROM toast_transactions t
      LEFT JOIN dim_locations d ON d.toast_loc_id = t.location_id
@@ -62,15 +67,15 @@ SELECT
      LEFT JOIN dim_locations d ON d.qu_store_code = q.store_code
      WHERE d.location_key IS NULL) AS qu_orphans;
 
--- 3. Reconciliation: conformed total ties to Toast net + Qu net (independent calc)
+-- 3. Reconciliation: conformed total ties to Toast net + Qu net (independent calc).
+--    Compare the SUM of toast_net + qu_net to SUM(net_sales) from the CTE above.
 SELECT
   (SELECT SUM(net_sales) FROM toast_transactions)                   AS toast_net,
   (SELECT SUM(gross_sales - promo_deductions) FROM qu_transactions) AS qu_net;
--- compare the sum of the two above to SUM(net_sales) from the Task 2 result set.
 
--- 4. Brand B presence: before vs after.
+-- 4. Brand B presence (the money shot): before vs after.
 --
--- BEFORE (run this before Task 1): Brand B dollars exist in qu_transactions
+-- BEFORE (run before Task 1): Brand B dollars exist in qu_transactions
 -- but the join fails because qu_store_code is not in dim_locations.
 -- d.brand comes back NULL - the data is there, it is just unreachable.
 SELECT d.brand, COUNT(*) AS transactions, SUM(q.gross_sales - q.promo_deductions) AS net_sales
@@ -80,7 +85,7 @@ GROUP BY d.brand;
 -- Expected before fix: one row with brand = NULL, net_sales = real dollars.
 -- The NULL brand proves the join is failing, not that the data is missing.
 
--- AFTER (run this after Task 1): Brand B resolves and appears by name.
+-- AFTER (run after Task 1): Brand B resolves and appears by name.
 WITH cns AS (
     SELECT d.location_key, t.net_sales AS net_sales
     FROM toast_transactions t JOIN dim_locations d ON d.toast_loc_id = t.location_id

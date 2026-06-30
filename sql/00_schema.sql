@@ -1,9 +1,7 @@
 -- =============================================================
 -- Harborline Foods - table schema
--- Creates the tables the CSVs load into. Run this (or let
--- src/load_data.py run it for you) before loading data.
--- Types follow the brief: VARCHAR, DECIMAL, DATE, INT.
--- Runs in PostgreSQL; portable to SQL Server (T-SQL) as-is.
+-- Creates the tables the CSVs load into. 
+-- Runs in PostgreSQL; portable to SQL Server (T-SQL) 
 -- =============================================================
 
 DROP TABLE IF EXISTS toast_transactions;
@@ -12,7 +10,7 @@ DROP TABLE IF EXISTS r365_gl_entries;
 DROP TABLE IF EXISTS qu_location_crosswalk;
 DROP TABLE IF EXISTS dim_locations;
 
--- Conformed location dimension. Grain: one row per physical location.
+-- Conformed location dimension. Grain: one row per location.
 -- NOTE: no qu_store_code column yet - that gap is what Task 1 fixes.
 CREATE TABLE dim_locations (
     location_key   INT PRIMARY KEY,
@@ -56,3 +54,4 @@ CREATE TABLE qu_location_crosswalk (
     location_name  VARCHAR(100),
     qu_store_code  VARCHAR(20)
 );
+
