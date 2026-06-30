@@ -65,4 +65,4 @@ erDiagram
 | 3 | `dax/measures.md` | Power BI DAX measures: Current Week, Rolling 4-Week Avg, Prime Cost %. |
 | 4 | _(in the submission package)_ | Stakeholder note to the CFO - delivered with the emailed submission, not committed here. |
 
-Clean T-SQL submission copies are in `submission/tsql/`. The SQL was validated in PostgreSQL from VS Code; `notebook/harborline_validation.ipynb` reproduces the same before/after and validation output with zero setup. Tools, time, assumptions, and the AI-usage log are in `submission/header_note.md`.
+Clean T-SQL submission copies are in `submission/tsql/`. The SQL was validated in PostgreSQL from VS Code, with before/after and validation checks built into `sql/02_conformed_net_sales.sql`. Tools, time, assumptions, and the AI-usage log are in `submission/header_note.md`.
