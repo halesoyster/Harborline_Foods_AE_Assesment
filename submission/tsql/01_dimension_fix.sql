@@ -23,10 +23,10 @@ ALTER TABLE dim_locations ADD qu_store_code VARCHAR(10);
 -- ---- 2. Backfill from the authoritative Qu crosswalk ---------------------------
 -- The crosswalk is the store->location map sourced from the Qu admin
 -- it was never loaded into the dimension - that is the bug.
-UPDATE d
-SET    d.qu_store_code = x.qu_store_code
-FROM   dim_locations d
-JOIN   qu_location_crosswalk x ON d.location_key = x.location_key;
+UPDATE dim_locations
+SET    dim_locations.qu_store_code = qu_location_crosswalk.qu_store_code
+FROM   dim_locations
+JOIN   qu_location_crosswalk ON dim_locations.location_key = qu_location_crosswalk.location_key;
 
 -- ---- AFTER: Brand B now carries its Qu store code ------------------------------
 SELECT location_key, location_name, brand, toast_loc_id, qu_store_code
@@ -45,8 +45,8 @@ WHERE brand = 'Brand B';
 -- Expected: brand_b_locations=9, mapped=9, still_missing=0
 
 -- (b) no Qu store code in the transactions is left without a dimension match
-SELECT DISTINCT q.store_code
-FROM qu_transactions q
-LEFT JOIN dim_locations d ON d.qu_store_code = q.store_code
-WHERE d.qu_store_code IS NULL;
+SELECT DISTINCT qu_transactions.store_code
+FROM qu_transactions
+LEFT JOIN dim_locations ON dim_locations.qu_store_code = qu_transactions.store_code
+WHERE dim_locations.qu_store_code IS NULL;
 -- Expected: 0 rows
